@@ -87,7 +87,8 @@ private Q_SLOTS:
 	void processControlFrame(WebSocketProtocol::OpCode opCode, QByteArray frame);
 	void processHandshake(QTcpSocket *pSocket);
 	void processStateChanged(QAbstractSocket::SocketState socketState);
-
+	void socketDestroyed(QObject* socket);
+	
 private:
 	Q_DISABLE_COPY(WebSocket)
 

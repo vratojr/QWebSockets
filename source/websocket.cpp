@@ -489,6 +489,7 @@ void WebSocket::makeConnections(const QTcpSocket *pTcpSocket)
 	//catch signals
 	connect(pTcpSocket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(processStateChanged(QAbstractSocket::SocketState)));
 	connect(pTcpSocket, SIGNAL(readyRead()), this, SLOT(processData()));
+    connect(pTcpSocket, SIGNAL(destroyed(QObject*)), this, SLOT(socketDestroyed(QObject*)));
 
 	connect(&m_dataProcessor, SIGNAL(controlFrameReceived(WebSocketProtocol::OpCode, QByteArray)), this, SLOT(processControlFrame(WebSocketProtocol::OpCode, QByteArray)));
 	connect(&m_dataProcessor, SIGNAL(textFrameReceived(QString,bool)), this, SIGNAL(textFrameReceived(QString,bool)));
@@ -496,6 +497,18 @@ void WebSocket::makeConnections(const QTcpSocket *pTcpSocket)
 	connect(&m_dataProcessor, SIGNAL(binaryMessageReceived(QByteArray)), this, SIGNAL(binaryMessageReceived(QByteArray)));
 	connect(&m_dataProcessor, SIGNAL(textMessageReceived(QString)), this, SIGNAL(textMessageReceived(QString)));
 	connect(&m_dataProcessor, SIGNAL(errorEncountered(WebSocketProtocol::CloseCode,QString)), this, SLOT(close(WebSocketProtocol::CloseCode,QString)));
+}
+
+/*!
+ * \internal
+ */
+void WebSocket::socketDestroyed(QObject* socket)
+{
+    if(socket != m_pSocket)
+        return;
+
+    releaseConnections(m_pSocket);
+    m_pSocket = 0;
 }
 
 /*!
@@ -515,6 +528,7 @@ void WebSocket::releaseConnections(const QTcpSocket *pTcpSocket)
 		//catched signals
 		disconnect(pTcpSocket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(processStateChanged(QAbstractSocket::SocketState)));
 		disconnect(pTcpSocket, SIGNAL(readyRead()), this, SLOT(processData()));
+        disconnect(pTcpSocket, SIGNAL(destroyed(QObject*)), this, SIGNAL(socketDestroyed(QObject*)));
 	}
 	disconnect(&m_dataProcessor, SIGNAL(controlFrameReceived(WebSocketProtocol::OpCode,QByteArray)), this, SLOT(processControlFrame(WebSocketProtocol::OpCode,QByteArray)));
 	disconnect(&m_dataProcessor, SIGNAL(textFrameReceived(QString,bool)), this, SIGNAL(textFrameReceived(QString,bool)));
